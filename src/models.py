@@ -1,29 +1,59 @@
 import os
 import sys
-from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship, declarative_base
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Column, ForeignKey, Integer, String, DateTime, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from datetime import datetime
 from eralchemy2 import render_er
 
 Base = declarative_base()
 
-class Person(Base):
-    __tablename__ = 'person'
-    # Here we define columns for the table person
-    # Notice that each column is also a normal Python instance attribute.
+class Users(Base):
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
+    username = Column(String(50), nullable=False)
+    firstname = Column(String(50), nullable=False)
+    lastname = Column(String(50), nullable=False)
+    email = Column(String(250), nullable=False)
+    registration_date = Column(DateTime, default=datetime.now)
 
-class Address(Base):
-    __tablename__ = 'address'
-    # Here we define columns for the table address.
-    # Notice that each column is also a normal Python instance attribute.
+class Posts(Base):
+    __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
-    street_name = Column(String(250))
-    street_number = Column(String(250))
-    post_code = Column(String(250), nullable=False)
-    person_id = Column(Integer, ForeignKey('person.id'))
-    person = relationship(Person)
+    author_id = Column(Integer, ForeignKey('users.id'))
+    post_text = (String(250))
+    created_at = Column(DateTime, default=datetime.now)
+
+    comments = relationship('Comments', backref='post')
+    media = relationship('Media', backref='posts')
+
+class Media(Base):
+    __tablename__ = 'media'
+    id = Column(Integer, primary_key=True)
+    posts_id = Column(Integer, ForeignKey('posts.id'))
+    url = Column(String)
+
+    posts = relationship('Posts', backref='media')
+
+class Comments(Base):
+    __tablename__ = 'comments'
+    id = Column(Integer, primary_key=True)
+    post_id = Column(Integer, ForeignKey('posts.id'))
+    author_id = Column(Integer, ForeignKey('users.id'))
+    comment_text = (String(250))
+    created_at = Column(DateTime, default=datetime.now)
+
+    posts = relationship('Posts', backref='comments')
+    author = relationship('Users')
+
+class Follow(Base):
+    __tablename__ = 'follow'
+    id = Column(Integer, primary_key=True)
+    follower_id = Column(Integer, ForeignKey('users.id'))
+    following_id = Column(Integer, ForeignKey('users.id'))
+
+    follower = relationship('Users', foreign_keys=[follower_id], backref='followers')
+    following = relationship('Users', foreign_keys=[following_id])
 
     def to_dict(self):
         return {}
